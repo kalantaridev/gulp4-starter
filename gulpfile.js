@@ -4,12 +4,12 @@ const {series, parallel, src, dest, watch} = require('gulp');
 const log = require('fancy-log');
 const clean = require('gulp-clean');
 const ejs = require('gulp-ejs');
-const sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('sass'));
 const srcmap = require('gulp-sourcemaps');
 const connect = require('gulp-connect');
 const deploy = require('gulp-gh-pages');
+const rename = require('gulp-rename')
 
-sass.compiler = require('node-sass');
 
 function clean_builds() {
     return src(['./dist/*', './.publish/*'], {read: false, dot: true})
@@ -18,7 +18,8 @@ function clean_builds() {
 
 function build_html() {
     return src('./src/page/*.ejs')
-        .pipe(ejs({}, {}, {ext: '.htm'}).on('error', log))
+        .pipe(ejs({}, {}, {ext: '.html'}).on('error', log))
+        .pipe(rename({extname: '.html'}))
         .pipe(dest('./dist'))
         .pipe(connect.reload());
 }
@@ -26,7 +27,7 @@ function build_html() {
 function build_styles() {
     return src('./src/scss/*.scss')
         .pipe(srcmap.init())
-        .pipe(sass({outputStyle: 'nested'}).on('error', sass.logError))
+        .pipe(sass().on('error', sass.logError))
         .pipe(srcmap.write('.'))
         .pipe(dest('./dist/css'))
         .pipe(connect.reload());
@@ -62,7 +63,7 @@ function deploy_gh_pages() {
         }));
 }
 
-watch('./src/page/*.ejs', build_html);
+watch('./src/page/**/*.ejs', build_html);
 watch('./src/scss/*.scss', build_styles);
 watch('./src/scripts/**/*', build_scripts);
 watch('./src/static/**/*', build_statics);
